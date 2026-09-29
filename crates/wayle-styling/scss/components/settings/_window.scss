@@ -26,6 +26,5 @@ button.settings-close image {
 
 window.settings-window paned > separator {
     min-width: var(--space-sm);
-    margin-left: calc(-1 * var(--space-sm));
     background-color: transparent;
 }
