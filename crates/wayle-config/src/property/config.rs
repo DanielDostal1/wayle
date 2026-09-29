@@ -260,6 +260,10 @@ impl<T: Clone + Send + Sync + PartialEq + JsonSchema + 'static> JsonSchema for C
         T::schema_name()
     }
 
+    fn schema_id() -> Cow<'static, str> {
+        T::schema_id()
+    }
+
     fn json_schema(gen_param: &mut SchemaGenerator) -> Schema {
         T::json_schema(gen_param)
     }

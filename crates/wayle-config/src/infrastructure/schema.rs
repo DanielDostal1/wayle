@@ -166,3 +166,41 @@ pub fn write_schema_to(path: &Path) -> io::Result<()> {
     };
     fs::write(path, schema)
 }
+
+#[cfg(test)]
+mod tests {
+    use serde_json::Value;
+
+    use super::*;
+
+    #[test]
+    fn workspace_maps_keep_compositor_specific_key_schemas()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let schema: Value =
+            serde_json::from_str(&generate_schema().ok_or("schema generation failed")?)?;
+        let workspace_map = |config: &str| {
+            schema["$defs"][config]["properties"]["workspace-map"]["$ref"]
+                .as_str()
+                .and_then(|reference| reference.strip_prefix('#'))
+                .and_then(|pointer| schema.pointer(pointer))
+        };
+
+        let niri =
+            workspace_map("NiriWorkspacesConfig").ok_or("missing Niri workspace map schema")?;
+        let hyprland = workspace_map("HyprlandWorkspacesConfig")
+            .ok_or("missing Hyprland workspace map schema")?;
+
+        assert!(
+            niri.get("patternProperties").is_none(),
+            "Niri workspace names must not inherit Hyprland's numeric key restriction"
+        );
+        assert!(niri["additionalProperties"].is_object());
+        assert_eq!(hyprland["additionalProperties"], false);
+        assert_eq!(
+            hyprland["patternProperties"][r"^-?\d+$"],
+            niri["additionalProperties"]
+        );
+
+        Ok(())
+    }
+}
